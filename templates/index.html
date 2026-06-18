@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CNN News Insights | Stay Updated</title>
+    <meta name="description" content="View, search, filter, and share the latest news stories from CNN. Share insights directly to X/Twitter.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <!-- Background Gradient Blurs -->
+    <div class="bg-blur bg-blur-1"></div>
+    <div class="bg-blur bg-blur-2"></div>
+
+    <div class="app-container">
+        <!-- Header Section -->
+        <header class="app-header">
+            <div class="header-logo">
+                <i class="fa-solid fa-newspaper logo-icon"></i>
+                <div class="logo-text">
+                    <h1>CNN News Insights</h1>
+                    <p>Track, filter, and share the latest news headlines</p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button id="refresh-btn" class="btn btn-primary" title="Refresh Feed">
+                    <i id="refresh-icon" class="fa-solid fa-arrows-rotate"></i>
+                    <span>Refresh News</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Filters & Search Section -->
+        <section class="controls-panel">
+            <div class="search-box">
+                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                <input type="text" id="search-input" placeholder="Search news (e.g. Trump, Fed, weather, tech)..." autocomplete="off">
+            </div>
+            <div class="filter-group">
+                <button class="filter-chip active" data-type="all">All Stories</button>
+                <button class="filter-chip" data-type="politics"><span class="dot dot-politics"></span>Politics</button>
+                <button class="filter-chip" data-type="world"><span class="dot dot-world"></span>World</button>
+                <button class="filter-chip" data-type="business"><span class="dot dot-business"></span>Business & Econ</button>
+                <button class="filter-chip" data-type="tech"><span class="dot dot-tech"></span>Tech & Sci</button>
+                <button class="filter-chip" data-type="general"><span class="dot dot-general"></span>General</button>
+            </div>
+        </section>
+
+        <!-- Main Feed / Content Section -->
+        <main class="feed-section">
+            <!-- Loading Indicator -->
+            <div id="loading-state" class="status-container">
+                <div class="spinner"></div>
+                <p>Fetching the latest stories from CNN...</p>
+            </div>
+
+            <!-- Error State -->
+            <div id="error-state" class="status-container hidden">
+                <i class="fa-solid fa-triangle-exclamation error-icon"></i>
+                <h3>Failed to load feed</h3>
+                <p id="error-message">Unknown error occurred.</p>
+                <button id="retry-btn" class="btn btn-secondary">Try Again</button>
+            </div>
+
+            <!-- Empty State -->
+            <div id="empty-state" class="status-container hidden">
+                <i class="fa-regular fa-folder-open empty-icon"></i>
+                <h3>No stories found</h3>
+                <p>Try adjusting your search terms or filters.</p>
+            </div>
+
+            <!-- Notes List -->
+            <div id="notes-list" class="notes-grid hidden">
+                <!-- Dynamically populated cards will go here -->
+            </div>
+        </main>
+
+        <footer class="app-footer">
+            <p>CNN News Insights &bull; Powered by CNN RSS Feeds</p>
+        </footer>
+    </div>
+
+    <!-- Share Modal / Composer -->
+    <div id="share-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fa-brands fa-x-twitter"></i> Share Update on X</h2>
+                <button id="close-modal-btn" class="btn-close"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="preview-card-compact">
+                    <span id="modal-badge" class="type-badge badge-general">General</span>
+                    <span id="modal-date" class="update-date">Date</span>
+                    <h4 id="modal-headline" style="margin-top:0.5rem; color:#fff; font-family:var(--font-heading);">Headline</h4>
+                    <p id="modal-source-text" style="margin-top:0.25rem;">Original release text goes here...</p>
+                </div>
+                <div class="tweet-composer">
+                    <label for="tweet-textarea">Customize your post:</label>
+                    <textarea id="tweet-textarea" rows="5" maxlength="280"></textarea>
+                    <div class="composer-meta">
+                        <span id="char-counter">0 / 280</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="cancel-tweet-btn" class="btn btn-secondary">Cancel</button>
+                <button id="send-tweet-btn" class="btn btn-tweet">
+                    <i class="fa-brands fa-x-twitter"></i> Post Update
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Instagram Share Modal -->
+    <div id="instagram-modal" class="modal-overlay hidden">
+        <div class="modal-content" style="max-width: 650px;">
+            <div class="modal-header">
+                <h2><i class="fa-brands fa-instagram" style="background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i> Share Story on Instagram</h2>
+                <button id="close-ig-modal-btn" class="btn-close"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body" style="display: grid; grid-template-columns: 240px 1fr; gap: 1.5rem; max-height: 480px; overflow-y: auto;">
+                <!-- Card Image Preview Canvas -->
+                <div class="ig-card-preview" style="text-align: center;">
+                    <label style="font-family: var(--font-heading); font-weight: 600; font-size: 0.85rem; color: var(--text-secondary); display: block; margin-bottom: 0.5rem;">Share Card Preview:</label>
+                    <canvas id="ig-canvas" width="600" height="600" style="width: 100%; border-radius: 12px; border: 1px solid var(--border-hover); box-shadow: 0 4px 12px rgba(0,0,0,0.5); background: #030a16;"></canvas>
+                </div>
+                <!-- Caption Copy Component -->
+                <div class="ig-caption-composer" style="display: flex; flex-direction: column; gap: 0.8rem;">
+                    <label for="ig-caption-textarea" style="font-family: var(--font-heading); font-weight: 600; font-size: 0.9rem; color: var(--text-secondary);">Instagram Caption:</label>
+                    <textarea id="ig-caption-textarea" rows="8" readonly style="width: 100%; background: rgba(8, 12, 20, 0.7); border: 1px solid var(--border-glass); border-radius: 14px; color: white; padding: 0.8rem; font-family: var(--font-body); font-size: 0.9rem; resize: none; outline: none;"></textarea>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-muted);">
+                        <span>Copy and paste on upload!</span>
+                        <span id="ig-copied-notification" style="color: var(--color-business); display: none;"><i class="fa-solid fa-check"></i> Copied!</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="cancel-ig-btn" class="btn btn-secondary">Close</button>
+                <button id="copy-ig-caption-btn" class="btn btn-primary">
+                    <i class="fa-solid fa-copy"></i> Copy Caption
+                </button>
+                <button id="download-ig-card-btn" class="btn btn-tweet" style="background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); color: white;">
+                    <i class="fa-solid fa-download"></i> Download Card
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript File -->
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
